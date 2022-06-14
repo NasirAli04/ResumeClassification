@@ -128,20 +128,71 @@ for i in b:
     
     
 df['cleaned_resume_description'] = d
-        
-            
-  
 
-    
-    
-    
-    
-    
-    
-    
 
-              
-        
-        
+vectorizer = CountVectorizer(max_features=2500)
+X = vectorizer.fit_transform(df['cleaned_resume_description']).toarray()
+X.shape
+
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i,random_state=0)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+    
+plt.plot(range(1, 11), wcss)
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+plt.show()
+
+
+range_n_clusters = [2,3,4]
+silhouette_avg = []
+for num_clusters in range_n_clusters:
+    # initialise kmeans
+    k_means = KMeans(n_clusters=num_clusters,random_state=12)
+    k_means.fit(X)
+    cluster_labels = k_means.labels_
+    silhouette_avg.append(silhouette_score(X, cluster_labels))
+    
  
+ # silhouette score
+
+plt.plot(range_n_clusters,silhouette_avg) 
+plt.title('silhouette_score')
+plt.show()
+
+# K-Means
+cal_score = []
+for i in range(2,5):
+    k_means = KMeans(n_clusters=i, random_state=1).fit(X)
+    labels = k_means.labels_
+    cal_score.append(calinski_harabasz_score(X, labels))
+    
+plt.plot(range_n_clusters,cal_score)
+plt.title('calinski_harabasz_score')
+plt.show()
+
+clusters_new = KMeans(4, random_state=42)
+clusters_new.fit(X)
+#Assign clusters to the data set
+df['clusterid_new'] = clusters_new.labels_
+df['clusterid_new'].unique()
+
+
+
+
+a=df['clusterid_new'].unique()
+for i in a:
+    print(i)
+    test_resume = df[df['clusterid_new']==i]
+    test_resume.reset_index(drop=True,inplace=True)
+    Term_count2=test_resume['cleaned_resume_description'].str.split(expand=True).stack().value_counts()
+    Term_count2=pd.DataFrame({'Term':Term_count2.index, 'Count':Term_count2.values})
+    print('the cluster ',i)
+    print(Term_count2.head())
+    
+# 0=workday ,1=sql,2=peoplesoft
+
     
